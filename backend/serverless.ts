@@ -56,7 +56,7 @@ const serverlessConfiguration: AWS = {
             method: 'post',
             path: 'todos',
             cors: true,
-            //authorizer: 'Auth',
+            authorizer: 'Auth',
             request: {
               schemas:{
                 'application/json': '${file(models/create-todo-model.json)}'
@@ -74,7 +74,7 @@ const serverlessConfiguration: AWS = {
             method: 'delete',
             path: 'todos/{todoId}',
             cors: true,
-            //authorizer: 'Auth',
+            authorizer: 'Auth',
           }
         }
       ]
@@ -124,6 +124,20 @@ const serverlessConfiguration: AWS = {
   },
   resources: {
     Resources: {
+      GatewayResponseDefault4XX: {
+        Type: "AWS::ApiGateway::GatewayResponse",
+        Properties: {
+          ResponseParameters: {
+            "gatewayresponse.header.Access-Control-Allow-Origin": "'*'",
+            "gatewayresponse.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
+            "gatewayresponse.header.Access-Control-Allow-Methods": "'*'"
+          },
+          ResponseType: "DEFAULT_4XX",
+          RestApiId: {
+            Ref: "ApiGatewayRestApi"
+          }
+        }
+      },
       TodosTable: {
         Type: 'AWS::DynamoDB::Table',
         Properties: {
@@ -220,7 +234,7 @@ const serverlessConfiguration: AWS = {
                 Sid: 'PublicReadForGetBucketObjects',
                 Effect: 'Allow',
                 Principal: '*',
-                Action: 's3:GetObject',
+                Action: 's3:*',
                 Resource: 'arn:aws:s3:::${self:provider.environment.TODOS_S3_BUCKET}/*'
               }
             ]

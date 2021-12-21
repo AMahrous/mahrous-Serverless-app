@@ -116,6 +116,12 @@
               }
             }
           },
+          "AuthLogGroup": {
+            "Type": "AWS::Logs::LogGroup",
+            "Properties": {
+              "LogGroupName": "/aws/lambda/mahrous-serverless-todo-app-dev-Auth"
+            }
+          },
           "CreateTodoLogGroup": {
             "Type": "AWS::Logs::LogGroup",
             "Properties": {
@@ -229,6 +235,40 @@
               }
             }
           },
+          "AuthLambdaFunction": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+              "Code": {
+                "S3Bucket": {
+                  "Ref": "ServerlessDeploymentBucket"
+                },
+                "S3Key": "serverless/mahrous-serverless-todo-app/dev/1640098495202-2021-12-21T14:54:55.202Z/mahrous-serverless-todo-app-dev-Auth.zip"
+              },
+              "Handler": "src/lambda/auth/auth0Authorizer.handler",
+              "Runtime": "nodejs14.x",
+              "FunctionName": "mahrous-serverless-todo-app-dev-Auth",
+              "MemorySize": 1024,
+              "Timeout": 6,
+              "Environment": {
+                "Variables": {
+                  "TODOS_TABLE": "Todos-dev",
+                  "TODOS_CREATED_AT_INDEX": "CreatedAtIndex",
+                  "TODOS_S3_BUCKET": "mahrous-todos-s3-bucket-dev",
+                  "AWS_NODEJS_CONNECTION_REUSE_ENABLED": "1",
+                  "NODE_OPTIONS": "--enable-source-maps --stack-trace-limit=1000"
+                }
+              },
+              "Role": {
+                "Fn::GetAtt": [
+                  "IamRoleLambdaExecution",
+                  "Arn"
+                ]
+              }
+            },
+            "DependsOn": [
+              "AuthLogGroup"
+            ]
+          },
           "CreateTodoLambdaFunction": {
             "Type": "AWS::Lambda::Function",
             "Properties": {
@@ -236,7 +276,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/mahrous-serverless-todo-app/dev/1640020289810-2021-12-20T17:11:29.810Z/mahrous-serverless-todo-app-dev-CreateTodo.zip"
+                "S3Key": "serverless/mahrous-serverless-todo-app/dev/1640098495202-2021-12-21T14:54:55.202Z/mahrous-serverless-todo-app-dev-CreateTodo.zip"
               },
               "Handler": "src/lambda/http/createTodo.handler",
               "Runtime": "nodejs14.x",
@@ -270,7 +310,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/mahrous-serverless-todo-app/dev/1640020289810-2021-12-20T17:11:29.810Z/mahrous-serverless-todo-app-dev-DeleteTodo.zip"
+                "S3Key": "serverless/mahrous-serverless-todo-app/dev/1640098495202-2021-12-21T14:54:55.202Z/mahrous-serverless-todo-app-dev-DeleteTodo.zip"
               },
               "Handler": "src/lambda/http/deleteTodo.handler",
               "Runtime": "nodejs14.x",
@@ -304,7 +344,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/mahrous-serverless-todo-app/dev/1640020289810-2021-12-20T17:11:29.810Z/mahrous-serverless-todo-app-dev-GenerateUploadUrl.zip"
+                "S3Key": "serverless/mahrous-serverless-todo-app/dev/1640098495202-2021-12-21T14:54:55.202Z/mahrous-serverless-todo-app-dev-GenerateUploadUrl.zip"
               },
               "Handler": "src/lambda/http/generateUploadUrl.handler",
               "Runtime": "nodejs14.x",
@@ -338,7 +378,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/mahrous-serverless-todo-app/dev/1640020289810-2021-12-20T17:11:29.810Z/mahrous-serverless-todo-app-dev-GetTodos.zip"
+                "S3Key": "serverless/mahrous-serverless-todo-app/dev/1640098495202-2021-12-21T14:54:55.202Z/mahrous-serverless-todo-app-dev-GetTodos.zip"
               },
               "Handler": "src/lambda/http/getTodos.handler",
               "Runtime": "nodejs14.x",
@@ -372,7 +412,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/mahrous-serverless-todo-app/dev/1640020289810-2021-12-20T17:11:29.810Z/mahrous-serverless-todo-app-dev-UpdateTodo.zip"
+                "S3Key": "serverless/mahrous-serverless-todo-app/dev/1640098495202-2021-12-21T14:54:55.202Z/mahrous-serverless-todo-app-dev-UpdateTodo.zip"
               },
               "Handler": "src/lambda/http/updateTodo.handler",
               "Runtime": "nodejs14.x",
@@ -447,6 +487,16 @@
                 "Ref": "GetTodosLambdaFunction"
               },
               "CodeSha256": "Bs1h1TO6s3fzOVeBv+0neRs2id9G3aAzjKNUAc7OOak="
+            }
+          },
+          "AuthLambdaVersiongftBGEa6S2Sh7sI1GIH57KLuZaq2fL956mXe1NE4jF4": {
+            "Type": "AWS::Lambda::Version",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "FunctionName": {
+                "Ref": "AuthLambdaFunction"
+              },
+              "CodeSha256": "vIUi9FRYV6oke/H3MJe8PJdnha1YPOb9LdsTaw0asws="
             }
           },
           "ApiGatewayRestApi": {
@@ -648,7 +698,10 @@
                 "Ref": "ApiGatewayRestApi"
               },
               "ApiKeyRequired": false,
-              "AuthorizationType": "NONE",
+              "AuthorizationType": "CUSTOM",
+              "AuthorizerId": {
+                "Ref": "AuthApiGatewayAuthorizer"
+              },
               "Integration": {
                 "IntegrationHttpMethod": "POST",
                 "Type": "AWS_PROXY",
@@ -686,9 +739,7 @@
                 }
               }
             },
-            "DependsOn": [
-              "CreateTodoLambdaPermissionApiGateway"
-            ]
+            "DependsOn": "AuthApiGatewayAuthorizer"
           },
           "ApiGatewayMethodTodosTodoidVarDelete": {
             "Type": "AWS::ApiGateway::Method",
@@ -702,7 +753,10 @@
                 "Ref": "ApiGatewayRestApi"
               },
               "ApiKeyRequired": false,
-              "AuthorizationType": "NONE",
+              "AuthorizationType": "CUSTOM",
+              "AuthorizerId": {
+                "Ref": "AuthApiGatewayAuthorizer"
+              },
               "Integration": {
                 "IntegrationHttpMethod": "POST",
                 "Type": "AWS_PROXY",
@@ -732,9 +786,7 @@
               },
               "MethodResponses": []
             },
-            "DependsOn": [
-              "DeleteTodoLambdaPermissionApiGateway"
-            ]
+            "DependsOn": "AuthApiGatewayAuthorizer"
           },
           "ApiGatewayMethodTodosTodoidVarAttachmentPost": {
             "Type": "AWS::ApiGateway::Method",
@@ -951,7 +1003,41 @@
               }
             }
           },
-          "ApiGatewayDeployment1640020286324": {
+          "AuthApiGatewayAuthorizer": {
+            "Type": "AWS::ApiGateway::Authorizer",
+            "Properties": {
+              "IdentitySource": "method.request.header.Authorization",
+              "Name": "Auth",
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              },
+              "AuthorizerUri": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition"
+                    },
+                    ":apigateway:",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    ":lambda:path/2015-03-31/functions/",
+                    {
+                      "Fn::GetAtt": [
+                        "AuthLambdaFunction",
+                        "Arn"
+                      ]
+                    },
+                    "/invocations"
+                  ]
+                ]
+              },
+              "Type": "TOKEN"
+            }
+          },
+          "ApiGatewayDeployment1640098492053": {
             "Type": "AWS::ApiGateway::Deployment",
             "Properties": {
               "RestApiId": {
@@ -976,6 +1062,43 @@
               "FunctionName": {
                 "Fn::GetAtt": [
                   "CreateTodoLambdaFunction",
+                  "Arn"
+                ]
+              },
+              "Action": "lambda:InvokeFunction",
+              "Principal": "apigateway.amazonaws.com",
+              "SourceArn": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition"
+                    },
+                    ":execute-api:",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    ":",
+                    {
+                      "Ref": "AWS::AccountId"
+                    },
+                    ":",
+                    {
+                      "Ref": "ApiGatewayRestApi"
+                    },
+                    "/*/*"
+                  ]
+                ]
+              }
+            }
+          },
+          "AuthLambdaPermissionApiGateway": {
+            "Type": "AWS::Lambda::Permission",
+            "Properties": {
+              "FunctionName": {
+                "Fn::GetAtt": [
+                  "AuthLambdaFunction",
                   "Arn"
                 ]
               },
@@ -1155,6 +1278,20 @@
               }
             }
           },
+          "GatewayResponseDefault4XX": {
+            "Type": "AWS::ApiGateway::GatewayResponse",
+            "Properties": {
+              "ResponseParameters": {
+                "gatewayresponse.header.Access-Control-Allow-Origin": "'*'",
+                "gatewayresponse.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
+                "gatewayresponse.header.Access-Control-Allow-Methods": "'*'"
+              },
+              "ResponseType": "DEFAULT_4XX",
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
           "TodosTable": {
             "Type": "AWS::DynamoDB::Table",
             "Properties": {
@@ -1241,7 +1378,7 @@
                     "Sid": "PublicReadForGetBucketObjects",
                     "Effect": "Allow",
                     "Principal": "*",
-                    "Action": "s3:GetObject",
+                    "Action": "s3:*",
                     "Resource": "arn:aws:s3:::mahrous-todos-s3-bucket-dev/*"
                   }
                 ]
@@ -1304,6 +1441,15 @@
             },
             "Export": {
               "Name": "sls-mahrous-serverless-todo-app-dev-GetTodosLambdaFunctionQualifiedArn"
+            }
+          },
+          "AuthLambdaFunctionQualifiedArn": {
+            "Description": "Current Lambda function version",
+            "Value": {
+              "Ref": "AuthLambdaVersiongftBGEa6S2Sh7sI1GIH57KLuZaq2fL956mXe1NE4jF4"
+            },
+            "Export": {
+              "Name": "sls-mahrous-serverless-todo-app-dev-AuthLambdaFunctionQualifiedArn"
             }
           },
           "ServiceEndpoint": {
@@ -1437,6 +1583,19 @@
     ],
     "pluginsData": {},
     "functions": {
+      "Auth": {
+        "handler": "src/lambda/auth/auth0Authorizer.handler",
+        "events": [],
+        "name": "mahrous-serverless-todo-app-dev-Auth",
+        "package": {
+          "artifact": "D:\\A.Mahrous\\Learning\\Udacity\\CDND\\P4\\mahrous-Serverless-app\\backend\\.serverless\\mahrous-serverless-todo-app-dev-Auth.zip"
+        },
+        "memory": 1024,
+        "timeout": 6,
+        "runtime": "nodejs14.x",
+        "vpc": {},
+        "versionLogicalId": "AuthLambdaVersiongftBGEa6S2Sh7sI1GIH57KLuZaq2fL956mXe1NE4jF4"
+      },
       "CreateTodo": {
         "handler": "src/lambda/http/createTodo.handler",
         "events": [
@@ -1459,6 +1618,14 @@
                   "X-Amz-User-Agent"
                 ],
                 "allowCredentials": false
+              },
+              "authorizer": {
+                "name": "Auth",
+                "arn": {
+                  "$ref": "$[\"service\"][\"provider\"][\"compiledCloudFormationTemplate\"][\"Resources\"][\"AuthLambdaPermissionApiGateway\"][\"Properties\"][\"FunctionName\"]"
+                },
+                "managedExternally": false,
+                "identitySource": "method.request.header.Authorization"
               },
               "request": {
                 "schemas": {
@@ -1503,6 +1670,14 @@
                   "X-Amz-User-Agent"
                 ],
                 "allowCredentials": false
+              },
+              "authorizer": {
+                "name": "Auth",
+                "arn": {
+                  "$ref": "$[\"service\"][\"provider\"][\"compiledCloudFormationTemplate\"][\"Resources\"][\"AuthLambdaPermissionApiGateway\"][\"Properties\"][\"FunctionName\"]"
+                },
+                "managedExternally": false,
+                "identitySource": "method.request.header.Authorization"
               },
               "integration": "AWS_PROXY"
             }
@@ -1639,6 +1814,20 @@
     },
     "resources": {
       "Resources": {
+        "GatewayResponseDefault4XX": {
+          "Type": "AWS::ApiGateway::GatewayResponse",
+          "Properties": {
+            "ResponseParameters": {
+              "gatewayresponse.header.Access-Control-Allow-Origin": "'*'",
+              "gatewayresponse.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
+              "gatewayresponse.header.Access-Control-Allow-Methods": "'*'"
+            },
+            "ResponseType": "DEFAULT_4XX",
+            "RestApiId": {
+              "Ref": "ApiGatewayRestApi"
+            }
+          }
+        },
         "TodosTable": {
           "Type": "AWS::DynamoDB::Table",
           "Properties": {
@@ -1725,7 +1914,7 @@
                   "Sid": "PublicReadForGetBucketObjects",
                   "Effect": "Allow",
                   "Principal": "*",
-                  "Action": "s3:GetObject",
+                  "Action": "s3:*",
                   "Resource": "arn:aws:s3:::mahrous-todos-s3-bucket-dev/*"
                 }
               ]
@@ -1769,7 +1958,7 @@
   },
   "package": {
     "individually": true,
-    "artifactDirectoryName": "serverless/mahrous-serverless-todo-app/dev/1640020289810-2021-12-20T17:11:29.810Z",
+    "artifactDirectoryName": "serverless/mahrous-serverless-todo-app/dev/1640098495202-2021-12-21T14:54:55.202Z",
     "artifact": ""
   }
 }
