@@ -47,7 +47,7 @@ export const handler = middy(
           'Access-Control-Allow-Origin': '*'
         },
       body: JSON.stringify({
-          newItem: newItem
+          item: newItem
       })
     }
   })
